@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Throttle Brawl
 
-## Getting Started
-
-First, run the development server:
+A lightweight pseudo-3D motorcycle combat racer: Next.js (App Router) + Phaser 4.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev     # http://localhost:3000
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Controls
+| Action | Keys |
+|---|---|
+| Throttle / Brake | ↑ / ↓ or W / S |
+| Steer | ← → or A / D |
+| Punch left / right | Z / X or J / K |
+| Quit to menu | ESC |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Structure
+```
+src/
+  app/page.tsx              server component, renders <GameClient/>
+  components/GameClient.tsx "use client" + next/dynamic({ ssr:false })
+  components/PhaserGame.tsx creates/destroys Phaser.Game in useEffect
+  game/
+    main.ts                 Phaser config + scene list
+    constants.ts            all tuning knobs (speed, FOV, damage, colours)
+    road/Track.ts           segment model, projection math, track builder
+    entities/Rival.ts       AI rider state/logic
+    scenes/BootScene.ts     procedurally generated placeholder textures
+    scenes/MenuScene.ts
+    scenes/RaceScene.ts     physics, combat, road + sprite rendering, HUD
+    scenes/GameOverScene.ts
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How the road works
+The road is a list of short segments, each with a `curve` and a `y` height.
+Every frame, segments ahead of the camera are projected world→screen
+(`Util.project`) and drawn as trapezoids front-to-back; `maxy` clips segments
+hidden behind hills. Curves are faked by accumulating a horizontal `dx` offset.
+Sprites (trees, riders) are then drawn back-to-front, scaled by the
+segment's projection scale and cropped behind hills.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Next steps
+- Real art: put sprites in `public/assets/`, load them in `BootScene.preload()`.
+- Audio: engine loop pitched by speed, hit/crash SFX (`this.sound`).
+- More tracks: add builders in `Track.build()` (roadside themes, tunnels).
+- Weapons pickup, police rider, cash/upgrade shop between races.
+- Mobile: on-screen touch buttons.
